@@ -1,0 +1,27 @@
+{
+  "name": "weapp-helper",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "homepage": "https://github.com/beansmile/weapp-helper",
+  "scripts": {
+    "build": "node bundle.js",
+    "upload": "node bundle.js && node publish.js"
+  },
+  "dependencies": {
+    "events": "^3.0.0",
+    "set-cookie-parser": "^2.3.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.3.3",
+    "@babel/plugin-proposal-class-properties": "^7.4.4",
+    "@babel/plugin-transform-runtime": "^7.2.0",
+    "@babel/preset-env": "^7.3.1",
+    "@babel/preset-typescript": "^7.3.3",
+    "@babel/runtime": "^7.3.1",
+    "flyio": "^0.6.14",
+    "fs-extra": "^7.0.1",
+    "gh-pages": "^2.0.1",
+    "glob": "^7.1.3"
+  }
+}
