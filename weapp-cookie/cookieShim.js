@@ -1,0 +1,141 @@
+import CookieStore from './CookieStore';
+import api from './api';
+import util from './util';
+/**
+ * 微信 Cookie 代理
+ */
+
+var cookieStore = function () {
+  // 创建 cookieStore 实例
+  var cookieStore = new CookieStore();
+  /**
+   * 定义请求 cookie 代理函数
+   * @param  {Object} options 请求参数
+   */
+
+  function cookieRequestProxy(options) {
+    // 是否启用 cookie（默认 true）
+    options.cookie = options.cookie === undefined || !!options.cookie;
+    options.dataType = options.dataType || 'json';
+
+    if (options.cookie) {
+      // 域名
+      var domain = (options.url || '').split('/')[2];
+      var path = options.url.split(domain).pop(); // 获取请求 cookies
+
+      var requestCookies = cookieStore.getRequestCookies(domain, path); // 请求时带上设置的 cookies
+
+      options.header = options.header || {};
+      options.header['Cookie'] = requestCookies;
+      options.header['X-Requested-With'] = 'XMLHttpRequest';
+
+      if (options.dataType === 'json') {
+        options.header['Accept'] = 'application/json, text/plain, */*';
+      } // 请求成功回调
+
+
+      var successCallback = options.success;
+
+      options.success = function (response) {
+        // 获取响应 cookies
+        var responseCookies = response.header ? response.header['Set-Cookie'] || response.header['set-cookie'] : ''; // 设置 cookies，以便下次请求带上
+
+        if (responseCookies) cookieStore.setResponseCookies(responseCookies, domain); // 调用成功回调函数
+
+        successCallback && successCallback(response);
+      };
+    } // 发送网络请求
+
+
+    return this(options);
+  } // 绑定新的
+
+
+  var requestProxy = cookieRequestProxy.bind(api.request);
+  var uploadFileProxy = cookieRequestProxy.bind(api.uploadFile);
+  var downloadFileProxy = cookieRequestProxy.bind(api.downloadFile);
+  var connectSocketProxy = cookieRequestProxy.bind(api.connectSocket);
+
+  try {
+    // 使用 requestProxy 覆盖微信原生 request、uploadFile
+    Object.defineProperties(api, {
+      // request
+      request: {
+        value: requestProxy
+      },
+      requestWithCookie: {
+        value: requestProxy
+      },
+      // uploadFile
+      uploadFile: {
+        value: uploadFileProxy
+      },
+      uploadFileWithCookie: {
+        value: uploadFileProxy
+      },
+      // downloadFile
+      downloadFile: {
+        value: downloadFileProxy
+      },
+      downloadFileWithCookie: {
+        value: downloadFileProxy
+      },
+      // connectSocket
+      connectSocket: {
+        value: connectSocketProxy
+      },
+      connectSocketWithCookie: {
+        value: connectSocketProxy
+      }
+    });
+  } catch (err) {
+    console.error('weapp-cookie: ', err);
+  } // 配置
+
+
+  cookieStore.config = function (options) {
+    options = Object.assign({
+      requestAlias: 'requestWithCookie',
+      uploadFileAlias: 'uploadFileWithCookie',
+      downloadFileAlias: 'downloadFileWithCookie',
+      connectSocketAlias: 'connectSocketWithCookie',
+      parseOptions: {
+        decodeValues: false
+      }
+    }, options); // 配置请求别名
+
+    if (options.requestAlias) {
+      Object.defineProperty(api, options.requestAlias, {
+        value: requestProxy
+      });
+    }
+
+    if (options.uploadFileAlias) {
+      Object.defineProperty(api, options.uploadFileAlias, {
+        value: uploadFileProxy
+      });
+    }
+
+    if (options.downloadFileAlias) {
+      Object.defineProperty(api, options.downloadFileAlias, {
+        value: downloadFileProxy
+      });
+    }
+
+    if (options.connectSocketAlias) {
+      Object.defineProperty(api, options.connectSocketAlias, {
+        value: connectSocketProxy
+      });
+    }
+
+    if (options.parseOptions) {
+      util.parseOptions = options.parseOptions;
+    }
+  }; // 返回 cookieStore
+
+
+  return cookieStore;
+}(); // 导出 cookieStore 实例
+
+
+export default cookieStore;
