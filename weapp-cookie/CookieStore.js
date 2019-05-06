@@ -417,7 +417,7 @@ function () {
       var setCookieStr = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
       var domain = arguments.length > 1 ? arguments[1] : undefined;
       // parse
-      var cookies = cookieParser.parse(cookieParser.splitCookiesString(setCookieStr)); // 转换为 Cookie 对象
+      var cookies = cookieParser.parse(cookieParser.splitCookiesString(setCookieStr), util.parseOptions); // 转换为 Cookie 对象
 
       return cookies.map(function (item) {
         if (!item.domain) item.domain = domain;
